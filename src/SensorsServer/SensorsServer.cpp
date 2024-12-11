@@ -1,93 +1,73 @@
-#include <pistache/endpoint.h>
-#include <pistache/router.h>
-#include <curl/curl.h>
-#include <nlohmann/json.hpp>
-#include <mutex>
-#include <unordered_map>
 #include <iostream>
-#include <thread>
-#include <ctime>
 #include <fstream>
-#include "JsonDataRW.hpp"
+#include "SensorsServer.hpp"
 
 using namespace Pistache;
 
-std::string latestReading;
-std::string latestTimestamp;
-int minReading = 0;
-int maxReading = 0;
+// Constructeur
+SensorsServer::SensorsServer(Address address) : endpoint(address) {}
 
-class SensorController {
-private:
+// Méthode pour récupérer toutes les lectures d'un capteur
+void SensorsServer::getAllSensorReadings(const Rest::Request &request, Http::ResponseWriter response) {
+    auto sensor = request.param(":sensor").as<std::string>();
+    auto jsonDataPtr = std::make_shared<nlohmann::json>();
 
-    std::mutex mutex;
-
-public:
-
-    void getAllSensorReadings (const Rest::Request &request, Http::ResponseWriter response) {
-
-        auto sensor = request.param(":sensor").as<std::string>();
-        auto jsonDataPtr = std::make_shared<nlohmann::json>();
-
-        {
-            std::lock_guard<std::mutex> lock(mutex);
-            readJsonFile(("../Server/" + sensor + ".json"), jsonDataPtr);
-        }
-
-        response.send(Http::Code::Created, jsonDataPtr->dump());
+    {
+        std::lock_guard<std::mutex> lock(mutex);
+        readJsonFile("../Server/readings.json", jsonDataPtr);
     }
 
-    void addNewSensorReading (const Rest::Request &request, Http::ResponseWriter response) {
+    response.send(Http::Code::Ok, jsonDataPtr->dump());
+}
 
-        auto body = nlohmann::json::parse(request.body());
-        auto sensor = request.param(":sensor").as<std::string>();
-        nlohmann::json JsonData;
+// Méthode pour ajouter une nouvelle lecture pour un capteur
+void SensorsServer::addNewSensorReading(const Rest::Request &request, Http::ResponseWriter response) {
+    auto body = nlohmann::json::parse(request.body());
+    auto sensor = request.param(":sensor").as<std::string>();
+    nlohmann::json JsonData;
 
-        {
-            std::lock_guard<std::mutex> lock(mutex);
+    {
+        std::lock_guard<std::mutex> lock(mutex);
 
-            latestTimestamp = body["timestamp"];
-            latestReading = body["reading"];
+        // std::cout << "ana giiiiiiiiit " << body.dump() << std::endl;
 
-            JsonData["timestamp"] = latestReading;
-            JsonData["reading"] = latestTimestamp;
+        std::string latestTimestamp = body["timestamp"];
+        int latestReading = body["reading"];
 
-            addJsonNewData("../Server/" + sensor + ".json", JsonData);
-            
-        }
+        JsonData["timestamp"] = latestTimestamp;
+        JsonData["reading"] = latestReading;
+        JsonData["id"] = sensor;
 
-        response.send(Http::Code::Created, JsonData.dump());
-
+        addJsonNewData("../Server/readings.json", JsonData);
     }
 
-    void resetSensorReadings (const Rest::Request &request, Http::ResponseWriter response) {
+    response.send(Http::Code::Created, JsonData.dump());
+}
 
-        auto sensor = request.param(":sensor").as<std::string>();
+// Méthode pour réinitialiser les lectures d'un capteur
+void SensorsServer::resetSensorReadings(const Rest::Request &request, Http::ResponseWriter response) {
+    auto sensor = request.param(":sensor").as<std::string>();
 
-        {
-
-            std::lock_guard<std::mutex> lock(mutex);
-            resetJsonFile("../Server/" + sensor + ".json");
-        
-        }
-
+    {
+        std::lock_guard<std::mutex> lock(mutex);
+        resetJsonFile("../Server/" + sensor + ".json");
     }
 
-};
+    response.send(Http::Code::No_Content);
+}
 
-void startServer() {
-    Http::Endpoint endpoint(Address(Ipv4::any(), Port(8082)));
+// Méthode pour démarrer le serveur
+void SensorsServer::startServer() {
     auto opts = Http::Endpoint::options().threads(1);
     endpoint.init(opts);
 
     Rest::Router router;
-    SensorController controller;
 
-    Rest::Routes::Post(router, "/sensors/:sensor", Rest::Routes::bind(&SensorController::addNewSensorReading, &controller));
-    Rest::Routes::Get(router, "/sensors/:sensor", Rest::Routes::bind(&SensorController::getAllSensorReadings, &controller));
-    Rest::Routes::Delete(router, "/sensors/:sensor", Rest::Routes::bind(&SensorController::resetSensorReadings, &controller));
+    Rest::Routes::Post(router, "/sensors/:sensor", Rest::Routes::bind(&SensorsServer::addNewSensorReading, this));
+    Rest::Routes::Get(router, "/sensors/:sensor", Rest::Routes::bind(&SensorsServer::getAllSensorReadings, this));
+    Rest::Routes::Delete(router, "/sensors/:sensor", Rest::Routes::bind(&SensorsServer::resetSensorReadings, this));
 
     endpoint.setHandler(router.handler());
-    std::cout << "Server running on port 8082..." << std::endl;
+    //std::cout << "Server running on port " << endpoint.address().port() << "..." << std::endl;
     endpoint.serve();
 }

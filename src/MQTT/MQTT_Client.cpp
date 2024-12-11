@@ -1,11 +1,12 @@
 #include <iostream>
 #include <thread>
-#include <cstring>
-#include "mqtt/async_client.h"
-#include "MQTT_Client.hpp"
+#include <string>
 #include <nlohmann/json.hpp>
+#include "mqtt/async_client.h"
 
-std::string sendRequest(const std::string& url, const std::string& method, const std::string& body = "");
+#include "MQTT_Client.hpp"
+#include "HTTPClient.hpp"
+
 std::string baseUrl = "http://localhost:8082/sensors";
 
 void MQTTCallback::connection_lost(const std::string& cause)
@@ -23,11 +24,7 @@ void MQTTCallback::message_arrived(mqtt::const_message_ptr message)
     std::cout << "Message arrived: " << std::endl << message->get_payload_str() << std::endl;
 
     std::string topic = message->get_topic();
-    if (topic == "temperature") {
-
-        sendRequest((baseUrl + "/temperature"), "POST", message->get_payload_str());
-
-    }
+    HTTPClient::sendRequest((baseUrl + "/" + topic), "POST", message->get_payload_str());
 
 }
 
@@ -122,7 +119,7 @@ void SensorService::sensor_publish()
     {
         for (auto& sensor : Sensors)
         {
-            publish(sensor->get_sensor_topic(), (sensor->get_sensor_reading()).dump());
+            publish(sensor->get_sensor_topic(), sensor->get_sensor_reading().dump());
         }
         std::this_thread::sleep_for(std::chrono::seconds(3));
     }

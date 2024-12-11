@@ -26,7 +26,7 @@ include_directories(include/gRPC/server)
 include_directories(include/gRPC/client)
 include_directories(include/JsonDataRW)
 include_directories(include/SensorsServer)
-include_directories(include/SensorsClient)
+include_directories(include/HTTPClient)
 include_directories(include/MQTT)
 include_directories(include/Sensors)
 
@@ -56,7 +56,7 @@ set(SOURCES
     src/gRPC/client/factorialClient.cpp
     src/JsonDataRW/JsonDataRW.cpp
     src/SensorsServer/SensorsServer.cpp
-    src/SensorsClient/SensorsClient.cpp
+    src/HTTPClient/HTTPClient.cpp
     src/MQTT/MQTT_Client.cpp
     src/Sensors/Sensor.cpp
     src/main.cpp

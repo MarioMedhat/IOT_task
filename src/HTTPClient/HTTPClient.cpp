@@ -1,26 +1,16 @@
-#include <pistache/endpoint.h>
-#include <pistache/router.h>
-#include <curl/curl.h>
-#include <nlohmann/json.hpp>
-#include <mutex>
-#include <unordered_map>
 #include <iostream>
-#include <thread>
-#include <ctime>
-#include <fstream>
-#include "JsonDataRW.hpp"
+#include <curl/curl.h>
 
-using namespace Pistache;
+#include "HTTPClient.hpp"
 
 // Function to handle the response data for the client
-size_t writeCallback(void* contents, size_t size, size_t nmemb, std::string* userData) {
+size_t HTTPClient::writeCallback(void* contents, size_t size, size_t nmemb, std::string* userData) {
     userData->append((char*)contents, size * nmemb);
     return size * nmemb;
 }
 
-// Function to send an HTTP request from the client
-std::string sendRequest(const std::string& url, const std::string& method, const std::string& body = "") {
-    std::cout << "youppi" << std::endl;
+// Function to send an HTTP request
+std::string HTTPClient::sendRequest(const std::string& url, const std::string& method, const std::string& body) {
     CURL* curl = curl_easy_init();
     std::string response;
 
@@ -53,16 +43,4 @@ std::string sendRequest(const std::string& url, const std::string& method, const
     }
 
     return response;
-}
-
-void runClient() {
-    std::string baseUrl = "http://localhost:8082/sensors";
-
-    int count = 0;
-
-    std::string getResponse = sendRequest(baseUrl + "/temperature", "GET");
-    std::cout << "GET All Books Response: " << getResponse << std::endl;
-
-    std::string deleteResponse = sendRequest(baseUrl + "/temperature", "DELETE");
-
 }

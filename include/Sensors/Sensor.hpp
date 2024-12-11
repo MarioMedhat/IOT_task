@@ -13,7 +13,7 @@ class Sensor
         virtual std::string get_sensor_topic() = 0;
 
         std::string timestamp;
-        nlohmann::json reading;
+        int reading;
 
 };
 

@@ -11,6 +11,13 @@
 #include "Sensor.hpp"
 #include "factorialServer.hpp"
 #include "factorialClient.hpp"
+#include "SensorsServer.hpp"
+
+// Définir l'adresse et le port pour le serveur HTTP
+Pistache::Address address(Pistache::Ipv4::any(), Pistache::Port(8082));
+
+// Créer une instance de SensorsServer
+SensorsServer controller(address);
 
 void FactorialClientrun() {
 
@@ -44,12 +51,9 @@ const int KEEP_ALLIVE_INTERVALL = 20;
 const int QOS = 1;
 const int TIMEOUT = 10000;
 
-void startServer();
-void runClient();
-
 int main(int argc, char** argv) {
 
-    std::thread serverThread(startServer);
+    std::thread serverThread([&controller]() {controller.startServer();});
     // std::thread clientThread(runClient);
 
     SensorService sensor (SERVER_ADDRESS, "Sensors", 20, 1);

@@ -1,20 +1,25 @@
-#ifndef JSON_SERVER_CLIENT_HPP
-#define JSON_SERVER_CLIENT_HPP
+#ifndef SENSOR_CONTROLLER_HPP
+#define SENSOR_CONTROLLER_HPP
 
-#include <string>
+#include <pistache/endpoint.h>
+#include <pistache/router.h>
 #include <nlohmann/json.hpp>
+#include <mutex>
+#include <string>
+#include "JsonDataRW.hpp"
 
-class JsonServerClient {
-public:
-    explicit JsonServerClient(const std::string& baseUrl);
+class SensorsServer {
+    private:
+        void getAllSensorReadings(const Pistache::Rest::Request &request, Pistache::Http::ResponseWriter response);
+        void addNewSensorReading(const Pistache::Rest::Request &request, Pistache::Http::ResponseWriter response);
+        void resetSensorReadings(const Pistache::Rest::Request &request, Pistache::Http::ResponseWriter response);
 
-    nlohmann::json get(const std::string& endpoint) const;
-    nlohmann::json post(const std::string& endpoint, const nlohmann::json& payload) const;
-    nlohmann::json put(const std::string& endpoint, const nlohmann::json& payload) const;
-    nlohmann::json del(const std::string& endpoint) const;
+        std::mutex mutex;
+        Pistache::Http::Endpoint endpoint;
 
-private:
-    std::string baseUrl_;
+    public:
+        SensorsServer(Pistache::Address address);
+        void startServer();
 };
 
-#endif // JSON_SERVER_CLIENT_HPP
+#endif // SENSOR_CONTROLLER_HPP

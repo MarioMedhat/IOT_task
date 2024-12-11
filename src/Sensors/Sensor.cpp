@@ -25,14 +25,14 @@ void Temp_Sensor::update_sensor_reading()
         static int count = 0;
         count ++;
         timestamp = getCurrentTimestamp2();
-        reading["temperature"] = count;
+        reading = count;
 }
 
 nlohmann::json Temp_Sensor::get_sensor_reading()
 {
     nlohmann::json JsonData;
     JsonData["timestamp"] = timestamp;
-    JsonData["reading"] = reading.dump();
+    JsonData["reading"] = reading;
 
     return JsonData;
 }
@@ -50,14 +50,14 @@ void Hum_Sensor::update_sensor_reading()
         static int count = 0;
         count ++;
         timestamp = getCurrentTimestamp2();
-        reading["humidity"] = (count + 100);
+        reading = (count + 100);
 }
 
 nlohmann::json Hum_Sensor::get_sensor_reading()
 {
     nlohmann::json JsonData;
     JsonData["timestamp"] = timestamp;
-    JsonData["reading"] = reading.dump();
+    JsonData["reading"] = reading;
 
     return JsonData;
 }
