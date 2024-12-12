@@ -24,24 +24,44 @@ void SensorsServer::getAllSensorReadings(const Rest::Request &request, Http::Res
 void SensorsServer::addNewSensorReading(const Rest::Request &request, Http::ResponseWriter response) {
     auto body = nlohmann::json::parse(request.body());
     auto sensor = request.param(":sensor").as<std::string>();
-    nlohmann::json JsonData;
+    nlohmann::json JsonDataReadings;
 
     {
         std::lock_guard<std::mutex> lock(mutex);
 
         // std::cout << "ana giiiiiiiiit " << body.dump() << std::endl;
 
-        std::string latestTimestamp = body["timestamp"];
-        int latestReading = body["reading"];
+        JsonDataReadings["timestamp"] = body["timestamp"];
+        JsonDataReadings["reading"] = body["reading"];
+        JsonDataReadings["id"] = sensor;
 
-        JsonData["timestamp"] = latestTimestamp;
-        JsonData["reading"] = latestReading;
-        JsonData["id"] = sensor;
+        addJsonNewData("../Server/readings.json", JsonDataReadings);
 
-        addJsonNewData("../Server/readings.json", JsonData);
+        auto JsonDataStatsPtr = std::make_shared<nlohmann::json>();
+        nlohmann::json JsonDataStats;
+        bool isFirstTime = isValueInField("../Server/stats.json", "id", sensor, JsonDataStatsPtr);
+
+        if (isFirstTime == false) {
+            JsonDataStats["id"] = sensor;
+            JsonDataStats["min"] = body["reading"];
+            JsonDataStats["max"] = body["reading"];
+            JsonDataStats["avg"] = body["reading"];
+        } else {
+            JsonDataStats = (*JsonDataStatsPtr);
+            if (JsonDataStats["min"] > body["reading"]) {
+                JsonDataStats["min"] = body["reading"];
+            } else if (JsonDataStats["max"] < body["reading"]) {
+                JsonDataStats["max"] = body["reading"];
+            }
+
+            JsonDataStats["avg"] = ((float)JsonDataStats["avg"] + (float)body["reading"]) / (float)2;
+
+            std::cout << JsonDataStats.dump() << std::endl;
+        }
+        updateObject("../Server/stats.json", "id", sensor, JsonDataStats);
     }
 
-    response.send(Http::Code::Created, JsonData.dump());
+    response.send(Http::Code::Created, JsonDataReadings.dump());
 }
 
 // Méthode pour réinitialiser les lectures d'un capteur

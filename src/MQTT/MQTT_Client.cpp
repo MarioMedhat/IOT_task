@@ -7,7 +7,7 @@
 #include "MQTT_Client.hpp"
 #include "HTTPClient.hpp"
 
-std::string baseUrl = "http://localhost:8082/sensors";
+std::string baseUrl = "http://localhost:8080/sensors";
 
 void MQTTCallback::connection_lost(const std::string& cause)
 {

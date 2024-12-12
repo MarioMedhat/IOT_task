@@ -14,7 +14,7 @@
 #include "SensorsServer.hpp"
 
 // Définir l'adresse et le port pour le serveur HTTP
-Pistache::Address address(Pistache::Ipv4::any(), Pistache::Port(8082));
+Pistache::Address address(Pistache::Ipv4::any(), Pistache::Port(8080));
 
 // Créer une instance de SensorsServer
 SensorsServer controller(address);

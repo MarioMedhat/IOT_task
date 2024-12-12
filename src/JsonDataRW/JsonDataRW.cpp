@@ -7,6 +7,78 @@ static bool isFileEmpty(std::ifstream& file) {
     return file.peek() == std::ifstream::traits_type::eof();
 }
 
+bool isValueInField(const std::string& filePath, const std::string& field, const std::string& val, std::shared_ptr<nlohmann::json> JsonDataPtr) {
+
+    bool returnVal = false;
+    std::cout << val << std::endl;
+
+    // Load the JSON file
+    std::ifstream jsonFile(filePath);
+    if (!jsonFile) {
+        std::cerr << "Error: Could not open the JSON file." << std::endl;
+    } else {
+        nlohmann::json jsonData;
+        if (!isFileEmpty(jsonFile)) {
+            // Parse the JSON data from the file
+            jsonFile >> jsonData;
+            for (const auto& obj : jsonData) {
+                if (obj.contains(field) && obj[field] == val) {
+                    (*JsonDataPtr) = obj;
+                    returnVal = true;
+                    break;
+                }
+            }
+        }
+        jsonFile.close();
+    }
+
+    return returnVal;
+}
+
+bool updateObject(const std::string& filePath, const std::string& field, const std::string& val, nlohmann::json newJsonData) {
+
+    bool returnVal = false;
+    bool found = false;
+
+    // Load the JSON file
+    std::ifstream jsonFile(filePath);
+    if (!jsonFile) {
+        std::cerr << "Error: Could not open the JSON file." << std::endl;
+    } else {
+
+        nlohmann::json jsonData;
+        if (!isFileEmpty(jsonFile)) {
+            jsonFile >> jsonData;
+
+            for (auto& obj : jsonData) {
+                if (obj.contains(field) && obj[field] == val) {
+                    returnVal = true;
+                    found = true;
+                    obj = newJsonData;
+
+                    // Write back to the file
+                    std::ofstream outFile(filePath);
+                    if (outFile.is_open()) {
+                        outFile << jsonData.dump(4); // Pretty-print with an indentation of 4 spaces
+                        outFile.close();
+                    } else {
+                        std::cerr << "Unable to open file for writing.\n";
+                    }
+
+                    break;
+                }
+            }
+        } 
+        
+        if (found == false) {
+            addJsonNewData(filePath, newJsonData);
+            returnVal = true;
+        }
+    }
+
+    return returnVal;
+}
+
 void addJsonNewData(const std::string& filePath, nlohmann::json newJsonData) {
     // Read existing JSON data
     nlohmann::json jsonData;

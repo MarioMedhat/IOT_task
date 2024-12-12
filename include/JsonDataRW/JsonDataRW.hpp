@@ -6,6 +6,8 @@
 #include <nlohmann/json.hpp>
 
 void addJsonNewData(const std::string& filePath, nlohmann::json newJsonData);
+bool updateObject(const std::string& filePath, const std::string& field, const std::string& val, nlohmann::json newJsonData);
+bool isValueInField(const std::string& filePath, const std::string& field, const std::string& val, std::shared_ptr<nlohmann::json> JsonDataPtr);
 void writeJsonFile(const std::string& filepath);
 void resetJsonFile (const std::string& filepath);
 void readJsonFile(const std::string& filepath, std::shared_ptr <nlohmann::json> jsonDataPtr);
